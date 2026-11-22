@@ -755,3 +755,62 @@ button, input {
   color: var(--navy);
   font-family: monospace;
 }
+
+
+/* Dual Attendance Additions */
+.th-sub {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 2px;
+  text-transform: none;
+}
+
+.text-blue {
+  color: #0369a1;
+}
+
+.bar-blue {
+  background: #0284c7 !important;
+}
+
+.rate-chip-blue {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.pill-blue:hover {
+  border-color: #0284c7;
+}
+
+.pill-active-blue {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.checkin-btn-blue-checked {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
+.checkin-btn-blue-checked .checkbox-custom {
+  background: #0284c7;
+  border: 2px solid #0284c7;
+  color: #ffffff;
+}
+
+.checkin-btn-blue-checked:hover {
+  background: #bae6fd;
+}
+
+.avatar-teal {
+  background: #ccfbf1;
+  color: #0f766e;
+}

@@ -11,59 +11,72 @@ export interface Applicant {
   phone: string;
   batch: string;
   major?: string;
+  attended_first?: boolean;
+  attended_last?: boolean;
+  attended_last_time?: string | null;
   attended?: boolean;
   attended_at?: string | null;
 }
 
 interface Stats {
   total: number;
-  attended: number;
-  absent: number;
-  rate: number;
+  attended_first: number;
+  attended_last: number;
 }
 
 export default function AttendancePortal() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, attended: 0, absent: 0, rate: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, attended_first: 0, attended_last: 0 });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [search, setSearch] = useState<string>("");
-  const [filter, setFilter] = useState<"all" | "attended" | "absent">("all");
+  const [filter, setFilter] = useState<"all" | "first" | "last" | "absent">("all");
   const [activeTabBatch, setActiveTabBatch] = useState<string>("all");
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string>("");
   const [exporting, setExporting] = useState<boolean>(false);
   const [, startTransition] = useTransition();
 
-  const STORAGE_KEY = "syncthon_attendance_v1";
+  const STORAGE_KEY = "syncthon_attendance_dual_v2";
 
   async function loadData() {
     setLoading(true);
     setError("");
 
-    // 1. Instantly restore from localStorage if available (zero wait, instant restore)
+    // 1. Instantly restore from localStorage
     try {
       const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
-        const parsed = JSON.parse(cached) as Record<string, { attended: boolean; attended_at?: string }>;
+        const parsed = JSON.parse(cached) as Record<
+          string,
+          { attended_first?: boolean; attended_last?: boolean; attended_last_time?: string | null }
+        >;
         setApplicants((prev) =>
           prev.map((a) => {
             const key = a.student_id || a.id;
             const rec = parsed[key];
-            return rec ? { ...a, attended: rec.attended, attended_at: rec.attended_at || null } : a;
+            if (!rec) return a;
+            return {
+              ...a,
+              attended_first: rec.attended_first ?? a.attended_first,
+              attended_last: rec.attended_last ?? a.attended_last,
+              attended_last_time: rec.attended_last_time ?? a.attended_last_time,
+            };
           })
         );
       }
     } catch {}
 
-    // 2. Fetch latest from server
+    // 2. Fetch from server
     try {
       const res = await fetch("/api/attendance");
       if (!res.ok) throw new Error("Could not connect to attendance service.");
       const json = await res.json();
       if (json.success && Array.isArray(json.applicants)) {
-        // Merge with local storage in case of any un-synced edits
-        let localMap: Record<string, { attended: boolean; attended_at?: string }> = {};
+        let localMap: Record<
+          string,
+          { attended_first?: boolean; attended_last?: boolean; attended_last_time?: string | null }
+        > = {};
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (raw) localMap = JSON.parse(raw);
@@ -72,31 +85,42 @@ export default function AttendancePortal() {
         const merged: Applicant[] = json.applicants.map((a: Applicant) => {
           const key = a.student_id || a.id;
           const localRec = localMap[key];
-          const isAttended = a.attended || (localRec ? localRec.attended : false);
+          const isFirst = localRec?.attended_first !== undefined ? localRec.attended_first : Boolean(a.attended_first);
+          const isLast = localRec?.attended_last !== undefined ? localRec.attended_last : Boolean(a.attended_last);
+          const lastTime = localRec?.attended_last_time || a.attended_last_time || null;
+
           return {
             ...a,
-            attended: isAttended,
-            attended_at: a.attended_at || localRec?.attended_at || null,
+            attended_first: isFirst,
+            attended_last: isLast,
+            attended_last_time: lastTime,
+            attended: isFirst || isLast,
           };
         });
 
-        const attendedCount = merged.filter((a) => a.attended).length;
-        const totalCount = merged.length;
+        const firstCount = merged.filter((a) => a.attended_first).length;
+        const lastCount = merged.filter((a) => a.attended_last).length;
 
         setApplicants(merged);
         setStats({
-          total: totalCount,
-          attended: attendedCount,
-          absent: totalCount - attendedCount,
-          rate: totalCount > 0 ? Math.round((attendedCount / totalCount) * 100) : 0,
+          total: merged.length,
+          attended_first: firstCount,
+          attended_last: lastCount,
         });
 
-        // Update local storage with full synced map
-        const newLocalMap: Record<string, { attended: boolean; attended_at?: string }> = {};
+        // Persist merged map back to localStorage
+        const newLocalMap: Record<
+          string,
+          { attended_first?: boolean; attended_last?: boolean; attended_last_time?: string | null }
+        > = {};
         merged.forEach((a) => {
           const k = a.student_id || a.id;
-          if (a.attended) {
-            newLocalMap[k] = { attended: true, attended_at: a.attended_at || undefined };
+          if (a.attended_first || a.attended_last) {
+            newLocalMap[k] = {
+              attended_first: a.attended_first,
+              attended_last: a.attended_last,
+              attended_last_time: a.attended_last_time,
+            };
           }
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocalMap));
@@ -114,47 +138,61 @@ export default function AttendancePortal() {
     loadData();
   }, []);
 
-  async function handleToggleAttendance(applicant: Applicant) {
+  async function handleToggle(applicant: Applicant, type: "first" | "last") {
     const targetKey = applicant.student_id || applicant.id;
-    const newStatus = !applicant.attended;
-    setPendingId(targetKey);
+    const lockKey = `${targetKey}_${type}`;
+    setPendingKey(lockKey);
 
     const nowTime = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
+
+    const isCurrent = type === "first" ? Boolean(applicant.attended_first) : Boolean(applicant.attended_last);
+    const newStatus = !isCurrent;
+
     const prev = [...applicants];
     const updated = applicants.map((a) => {
       if (a.student_id === targetKey || a.id === targetKey) {
-        return {
-          ...a,
-          attended: newStatus,
-          attended_at: newStatus ? nowTime : null,
-        };
+        if (type === "first") {
+          return {
+            ...a,
+            attended_first: newStatus,
+          };
+        } else {
+          return {
+            ...a,
+            attended_last: newStatus,
+            attended_last_time: newStatus ? nowTime : null,
+          };
+        }
       }
       return a;
     });
 
-    const attendedCount = updated.filter((a) => a.attended).length;
-    const totalCount = updated.length;
+    const firstCount = updated.filter((a) => a.attended_first).length;
+    const lastCount = updated.filter((a) => a.attended_last).length;
+
     setApplicants(updated);
     setStats({
-      total: totalCount,
-      attended: attendedCount,
-      absent: totalCount - attendedCount,
-      rate: totalCount > 0 ? Math.round((attendedCount / totalCount) * 100) : 0,
+      total: updated.length,
+      attended_first: firstCount,
+      attended_last: lastCount,
     });
 
-    // Save to localStorage immediately (guaranteed instant auto-save)
+    // Save to localStorage immediately
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const map = raw ? JSON.parse(raw) : {};
-      if (newStatus) {
-        map[targetKey] = { attended: true, attended_at: nowTime };
+      const cur = map[targetKey] || {};
+      if (type === "first") {
+        cur.attended_first = newStatus;
       } else {
-        delete map[targetKey];
+        cur.attended_last = newStatus;
+        cur.attended_last_time = newStatus ? nowTime : null;
       }
+      map[targetKey] = cur;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     } catch {}
 
@@ -165,7 +203,9 @@ export default function AttendancePortal() {
         body: JSON.stringify({
           id: applicant.id,
           studentId: applicant.student_id,
+          type,
           attended: newStatus,
+          time: newStatus && type === "last" ? nowTime : undefined,
         }),
       });
 
@@ -175,17 +215,17 @@ export default function AttendancePortal() {
       }
 
       setToastMessage(
-        newStatus
-          ? `✓ ${applicant.name} checked in at ${nowTime}`
-          : `✕ ${applicant.name} marked absent`
+        type === "first"
+          ? (newStatus ? `✓ ${applicant.name} marked present (First Attendance)` : `✕ ${applicant.name} unmarked (First Attendance)`)
+          : (newStatus ? `✓ ${applicant.name} check-out recorded at ${nowTime} (Last Attendance)` : `✕ ${applicant.name} unmarked (Last Attendance)`)
       );
       setTimeout(() => setToastMessage(""), 3500);
     } catch (err) {
       console.warn("Server sync notice:", err);
-      setToastMessage(`✓ ${applicant.name} saved locally`);
-      setTimeout(() => setToastMessage(""), 3500);
+      setToastMessage(`✓ Saved locally: ${applicant.name}`);
+      setTimeout(() => setToastMessage(""), 3000);
     } finally {
-      setPendingId(null);
+      setPendingKey(null);
     }
   }
 
@@ -210,7 +250,7 @@ export default function AttendancePortal() {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      setToastMessage("✓ SyncThon.xlsx downloaded with live attendance & timestamps!");
+      setToastMessage("✓ SyncThon.xlsx downloaded with First & Last attendance and timestamps!");
       setTimeout(() => setToastMessage(""), 4000);
     } catch (err) {
       console.error("Export download failed:", err);
@@ -220,7 +260,6 @@ export default function AttendancePortal() {
     }
   }
 
-  // Get distinct batches
   const batches = useMemo(() => {
     const set = new Set<string>();
     applicants.forEach((a) => {
@@ -240,8 +279,9 @@ export default function AttendancePortal() {
         (a.batch && a.batch.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
-      if (filter === "attended" && !a.attended) return false;
-      if (filter === "absent" && a.attended) return false;
+      if (filter === "first" && !a.attended_first) return false;
+      if (filter === "last" && !a.attended_last) return false;
+      if (filter === "absent" && (a.attended_first || a.attended_last)) return false;
       if (activeTabBatch !== "all" && a.batch !== activeTabBatch) return false;
       return true;
     });
@@ -303,26 +343,26 @@ export default function AttendancePortal() {
                 <path d="M23 4v6h-6M1 20v-6h6" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
-              <span>{loading ? "Syncing..." : "Sync Supabase"}</span>
+              <span>{loading ? "Syncing..." : "Sync"}</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Hero / Header overview */}
+      {/* Sub-header */}
       <div className="portal-subbar">
         <div className="page-width subbar-inner">
           <div>
             <h1 className="portal-title">THINKTHON 2026 Check-in</h1>
             <p className="portal-subtitle">
-              IEEE Zewail City Student Branch · Live desk check-in and attendance manager.
+              Dual-session Attendance: <strong>Attendance First (البداية)</strong> &amp; <strong>Attendance Last (النهاية مع التوقيت)</strong>.
             </p>
           </div>
 
           <div className="sync-status-indicator">
             <span className="sync-pill">
               <span className="green-ping" />
-              Direct Supabase Database Connected
+              Auto-Save Active (Cloud &amp; Local)
             </span>
           </div>
         </div>
@@ -332,26 +372,41 @@ export default function AttendancePortal() {
         {/* KPI Counter Cards */}
         <section className="stats-row">
           <div className="stat-box">
-            <span className="stat-label">Total Applicants</span>
+            <span className="stat-label">Total Registered</span>
             <span className="stat-num">{stats.total}</span>
-            <span className="stat-desc">58 registered participants</span>
+            <span className="stat-desc">58 applicants roster</span>
           </div>
 
           <div className="stat-box stat-present-box">
             <div className="stat-box-header">
-              <span className="stat-label">Checked In (حاضر)</span>
-              <span className="rate-chip">{stats.rate}%</span>
+              <span className="stat-label">Attendance First (البداية)</span>
+              <span className="rate-chip">
+                {stats.total > 0 ? Math.round((stats.attended_first / stats.total) * 100) : 0}%
+              </span>
             </div>
-            <span className="stat-num text-success">{stats.attended}</span>
+            <span className="stat-num text-success">{stats.attended_first}</span>
             <div className="mini-progress">
-              <div className="mini-progress-bar" style={{ width: `${stats.rate}%` }} />
+              <div
+                className="mini-progress-bar"
+                style={{ width: `${stats.total > 0 ? (stats.attended_first / stats.total) * 100 : 0}%` }}
+              />
             </div>
           </div>
 
-          <div className="stat-box stat-pending-box">
-            <span className="stat-label">Awaiting Arrival (غائب)</span>
-            <span className="stat-num text-muted">{stats.absent}</span>
-            <span className="stat-desc">Remaining to check in</span>
+          <div className="stat-box stat-last-box">
+            <div className="stat-box-header">
+              <span className="stat-label">Attendance Last (النهاية)</span>
+              <span className="rate-chip rate-chip-blue">
+                {stats.total > 0 ? Math.round((stats.attended_last / stats.total) * 100) : 0}%
+              </span>
+            </div>
+            <span className="stat-num text-blue">{stats.attended_last}</span>
+            <div className="mini-progress">
+              <div
+                className="mini-progress-bar bar-blue"
+                style={{ width: `${stats.total > 0 ? (stats.attended_last / stats.total) * 100 : 0}%` }}
+              />
+            </div>
           </div>
         </section>
 
@@ -379,7 +434,7 @@ export default function AttendancePortal() {
               </svg>
               <input
                 type="text"
-                placeholder="Search student name, ID (e.g. 2025...), or email..."
+                placeholder="Search by student name, ID (e.g. 2025...), or batch..."
                 value={search}
                 onChange={(e) => startTransition(() => setSearch(e.target.value))}
                 className="search-field"
@@ -401,17 +456,24 @@ export default function AttendancePortal() {
               </button>
               <button
                 type="button"
-                className={`pill-btn pill-green ${filter === "attended" ? "pill-active-green" : ""}`}
-                onClick={() => setFilter("attended")}
+                className={`pill-btn pill-green ${filter === "first" ? "pill-active-green" : ""}`}
+                onClick={() => setFilter("first")}
               >
-                ✓ Checked In ({stats.attended})
+                First Round ({stats.attended_first})
+              </button>
+              <button
+                type="button"
+                className={`pill-btn pill-blue ${filter === "last" ? "pill-active-blue" : ""}`}
+                onClick={() => setFilter("last")}
+              >
+                Final Round ({stats.attended_last})
               </button>
               <button
                 type="button"
                 className={`pill-btn pill-gray ${filter === "absent" ? "pill-active-gray" : ""}`}
                 onClick={() => setFilter("absent")}
               >
-                Pending ({stats.absent})
+                Pending
               </button>
             </div>
           </div>
@@ -419,7 +481,7 @@ export default function AttendancePortal() {
           {/* Batch Selector Bar */}
           {batches.length > 0 && (
             <div className="batch-tabs">
-              <span className="batch-tabs-label">Filter by Batch:</span>
+              <span className="batch-tabs-label">Filter Batch:</span>
               <button
                 type="button"
                 className={`batch-tab ${activeTabBatch === "all" ? "active" : ""}`}
@@ -445,12 +507,12 @@ export default function AttendancePortal() {
             {loading ? (
               <div className="empty-state">
                 <div className="spinner" />
-                <p>Connecting to Supabase and loading applicants...</p>
+                <p>Connecting and loading participants...</p>
               </div>
             ) : filteredApplicants.length === 0 ? (
               <div className="empty-state">
-                <p className="empty-title">No students found matching your criteria</p>
-                <p className="empty-sub">Try adjusting the search query or changing active filters.</p>
+                <p className="empty-title">No participants found</p>
+                <p className="empty-sub">Try searching by a different name or ID.</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -460,41 +522,48 @@ export default function AttendancePortal() {
                   }}
                   className="reset-filters-btn"
                 >
-                  Reset All Filters
+                  Reset Filters
                 </button>
               </div>
             ) : (
               <table className="roster-table">
                 <thead>
                   <tr>
-                    <th style={{ width: "50px", textAlign: "center" }}>#</th>
+                    <th style={{ width: "45px", textAlign: "center" }}>#</th>
                     <th>Student Information</th>
-                    <th>ID & Batch</th>
-                    <th>Contact</th>
-                    <th style={{ textAlign: "center", width: "190px" }}>Check-in Toggle</th>
+                    <th>ID &amp; Batch</th>
+                    <th style={{ textAlign: "center", width: "170px" }}>
+                      Attendance First
+                      <span className="th-sub">البداية</span>
+                    </th>
+                    <th style={{ textAlign: "center", width: "190px" }}>
+                      Attendance Last
+                      <span className="th-sub">النهاية (مع التوقيت)</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredApplicants.map((applicant, index) => {
-                    const isAttended = Boolean(applicant.attended);
-                    const isPending = pendingId === (applicant.student_id || applicant.id);
+                    const isFirst = Boolean(applicant.attended_first);
+                    const isLast = Boolean(applicant.attended_last);
+                    const targetKey = applicant.student_id || applicant.id;
+                    const isPendingFirst = pendingKey === `${targetKey}_first`;
+                    const isPendingLast = pendingKey === `${targetKey}_last`;
 
                     return (
                       <tr
                         key={applicant.id || applicant.student_id}
-                        className={`student-row ${isAttended ? "is-present" : "is-pending"}`}
+                        className={`student-row ${isFirst || isLast ? "is-present" : "is-pending"}`}
                       >
                         <td className="cell-num">{index + 1}</td>
                         <td className="cell-student">
                           <div className="student-profile">
-                            <div className={`avatar ${isAttended ? "avatar-green" : "avatar-slate"}`}>
+                            <div className={`avatar ${isFirst && isLast ? "avatar-green" : isFirst ? "avatar-teal" : "avatar-slate"}`}>
                               {applicant.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="student-meta">
                               <span className="name-text">{applicant.name}</span>
-                              {applicant.major && (
-                                <span className="major-text">{applicant.major}</span>
-                              )}
+                              <span className="major-text">{applicant.email}</span>
                             </div>
                           </div>
                         </td>
@@ -506,38 +575,57 @@ export default function AttendancePortal() {
                             )}
                           </div>
                         </td>
-                        <td className="cell-contact">
-                          <div className="contact-block">
-                            <span className="contact-email">{applicant.email}</span>
-                            {applicant.phone && (
-                              <span className="contact-phone">{applicant.phone}</span>
-                            )}
-                          </div>
+
+                        {/* Attendance First Column */}
+                        <td className="cell-action">
+                          <button
+                            type="button"
+                            disabled={isPendingFirst}
+                            onClick={() => handleToggle(applicant, "first")}
+                            className={`checkin-btn ${
+                              isFirst ? "checkin-btn-checked" : "checkin-btn-unchecked"
+                            }`}
+                            title="Toggle First Attendance (البداية)"
+                          >
+                            <span className="checkbox-custom">
+                              {isFirst ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : null}
+                            </span>
+                            <span className="btn-text">
+                              {isFirst ? "First: In" : "First: Check In"}
+                            </span>
+                          </button>
                         </td>
+
+                        {/* Attendance Last Column (with Time) */}
                         <td className="cell-action">
                           <div className="action-cell-container">
                             <button
                               type="button"
-                              disabled={isPending}
-                              onClick={() => handleToggleAttendance(applicant)}
+                              disabled={isPendingLast}
+                              onClick={() => handleToggle(applicant, "last")}
                               className={`checkin-btn ${
-                                isAttended ? "checkin-btn-checked" : "checkin-btn-unchecked"
+                                isLast ? "checkin-btn-blue-checked" : "checkin-btn-unchecked"
                               }`}
+                              title="Toggle Last Attendance with Time (النهاية)"
                             >
                               <span className="checkbox-custom">
-                                {isAttended ? (
+                                {isLast ? (
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                     <polyline points="20 6 9 17 4 12" />
                                   </svg>
                                 ) : null}
                               </span>
                               <span className="btn-text">
-                                {isAttended ? "Checked In" : "Mark Present"}
+                                {isLast ? "Last: In" : "Last: Check In"}
                               </span>
                             </button>
-                            {isAttended && applicant.attended_at && (
-                              <span className="checkin-time-badge" title="Check-in timestamp">
-                                🕒 {applicant.attended_at}
+                            {isLast && applicant.attended_last_time && (
+                              <span className="checkin-time-badge" title="Check-out recorded time">
+                                🕒 {applicant.attended_last_time}
                               </span>
                             )}
                           </div>
@@ -551,14 +639,11 @@ export default function AttendancePortal() {
           </div>
         </div>
 
-        {/* Footer information */}
+        {/* Footer */}
         <footer className="portal-footer">
           <div className="footer-content">
             <p>
-              THINKTHON Attendance Portal · Organizers Edition. Integrated with Supabase database.
-            </p>
-            <p className="excel-sync-info">
-              File synced locally: <code>D:\SyncThon\SyncThon.xlsx</code> (Updated with green/red status & emojis).
+              THINKTHON Attendance Portal · Organizers Console. Exporting generates <code>SyncThon.xlsx</code> with First &amp; Last attendance and timestamps.
             </p>
           </div>
         </footer>

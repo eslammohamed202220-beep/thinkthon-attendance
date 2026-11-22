@@ -2,6 +2,15 @@ import fs from "fs";
 import path from "path";
 import ExcelJS from "exceljs";
 
+export interface AttendanceRecord {
+  attended_first?: boolean;
+  attended_last?: boolean;
+  attended_last_time?: string | null;
+  // legacy compatibility
+  attended?: boolean;
+  attended_at?: string | null;
+}
+
 export interface Applicant {
   id: string;
   name: string;
@@ -10,6 +19,9 @@ export interface Applicant {
   phone: string;
   batch: string;
   major?: string;
+  attended_first?: boolean;
+  attended_last?: boolean;
+  attended_last_time?: string | null;
   attended?: boolean;
   attended_at?: string | null;
 }
@@ -26,7 +38,7 @@ function ensureDataDir() {
   }
 }
 
-export function getAttendanceMap(): Record<string, { attended: boolean; attended_at?: string }> {
+export function getAttendanceMap(): Record<string, AttendanceRecord> {
   ensureDataDir();
   if (fs.existsSync(ATTENDANCE_FILE)) {
     try {
@@ -39,7 +51,7 @@ export function getAttendanceMap(): Record<string, { attended: boolean; attended
   return {};
 }
 
-export function saveAttendanceMap(map: Record<string, { attended: boolean; attended_at?: string }>) {
+export function saveAttendanceMap(map: Record<string, AttendanceRecord>) {
   ensureDataDir();
   fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(map, null, 2), "utf-8");
 }
@@ -91,16 +103,28 @@ export async function fetchApplicants(): Promise<Applicant[]> {
 
   return rawApplicants.map((applicant) => {
     const key = applicant.student_id || applicant.id;
-    const record = attendanceMap[key] || attendanceMap[applicant.id];
+    const record = attendanceMap[key] || attendanceMap[applicant.id] || {};
+    const attendedFirst = record.attended_first !== undefined ? Boolean(record.attended_first) : Boolean(record.attended);
+    const attendedLast = Boolean(record.attended_last);
+    const attendedLastTime = record.attended_last_time || null;
+
     return {
       ...applicant,
-      attended: record ? Boolean(record.attended) : false,
-      attended_at: record?.attended_at || null,
+      attended_first: attendedFirst,
+      attended_last: attendedLast,
+      attended_last_time: attendedLastTime,
+      attended: attendedFirst || attendedLast,
+      attended_at: attendedLastTime || record.attended_at || null,
     };
   });
 }
 
-export async function toggleAttendance(idOrStudentId: string, attended: boolean): Promise<Applicant[]> {
+export async function toggleAttendance(
+  idOrStudentId: string,
+  type: "first" | "last",
+  attended: boolean,
+  timeStr?: string
+): Promise<Applicant[]> {
   const applicants = await fetchApplicants();
   const attendanceMap = getAttendanceMap();
 
@@ -110,20 +134,33 @@ export async function toggleAttendance(idOrStudentId: string, attended: boolean)
 
   if (applicant) {
     const key = applicant.student_id || applicant.id;
-    attendanceMap[key] = {
-      attended,
-      attended_at: attended ? new Date().toISOString() : undefined,
-    };
+    const current = attendanceMap[key] || {};
+
+    if (type === "first") {
+      current.attended_first = attended;
+      current.attended = attended || Boolean(current.attended_last);
+    } else {
+      current.attended_last = attended;
+      current.attended_last_time = attended
+        ? timeStr || new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+        : null;
+      current.attended = Boolean(current.attended_first) || attended;
+    }
+
+    attendanceMap[key] = current;
     saveAttendanceMap(attendanceMap);
   }
 
   const updatedApplicants = applicants.map((a) => {
     const key = a.student_id || a.id;
-    const record = attendanceMap[key] || attendanceMap[a.id];
+    const record = attendanceMap[key] || {};
     return {
       ...a,
-      attended: record ? Boolean(record.attended) : false,
-      attended_at: record?.attended_at || null,
+      attended_first: Boolean(record.attended_first),
+      attended_last: Boolean(record.attended_last),
+      attended_last_time: record.attended_last_time || null,
+      attended: Boolean(record.attended_first) || Boolean(record.attended_last),
+      attended_at: record.attended_last_time || null,
     };
   });
 
@@ -143,7 +180,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
   });
 
   // Title Banner
-  worksheet.mergeCells("A1:H1");
+  worksheet.mergeCells("A1:I1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "THINKTHON 2026 — Official Attendance Roster (سجل الحضور الرسمي)";
   titleCell.font = { name: "Arial", size: 15, bold: true, color: { argb: "FFFFFFFF" } };
@@ -157,13 +194,12 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
 
   // Stats Subheader
   const total = applicants.length;
-  const attendedCount = applicants.filter((a) => a.attended).length;
-  const absentCount = total - attendedCount;
-  const rate = total > 0 ? Math.round((attendedCount / total) * 100) : 0;
+  const firstCount = applicants.filter((a) => a.attended_first).length;
+  const lastCount = applicants.filter((a) => a.attended_last).length;
 
-  worksheet.mergeCells("A2:H2");
+  worksheet.mergeCells("A2:I2");
   const statsCell = worksheet.getCell("A2");
-  statsCell.value = `Total Registered: ${total}   |   ✅ Present: ${attendedCount}   |   ❌ Absent: ${absentCount}   |   Turnout Rate: ${rate}%   |   Updated: ${new Date().toLocaleString()}`;
+  statsCell.value = `Total Registered: ${total}   |   ✅ Attendance First: ${firstCount}   |   ✅ Attendance Last: ${lastCount}   |   Generated: ${new Date().toLocaleString()}`;
   statsCell.font = { name: "Arial", size: 10, italic: true, color: { argb: "FF00B4DC" } };
   statsCell.alignment = { horizontal: "center", vertical: "middle" };
   statsCell.fill = {
@@ -173,13 +209,14 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
   };
   worksheet.getRow(2).height = 24;
 
-  // Table Headers
+  // Table Headers (9 columns)
   const headers = [
     { header: "#", key: "index", width: 6 },
     { header: "Student Name", key: "name", width: 34 },
     { header: "Student ID", key: "student_id", width: 18 },
-    { header: "Attendance Status", key: "status", width: 24 },
-    { header: "Check-in Time (وقت الحضور)", key: "time", width: 22 },
+    { header: "Attendance First (حضور البداية)", key: "first", width: 26 },
+    { header: "Attendance Last (حضور النهاية)", key: "last", width: 26 },
+    { header: "Exit Time (وقت حضور النهاية)", key: "time", width: 24 },
     { header: "Batch", key: "batch", width: 14 },
     { header: "Email Address", key: "email", width: 34 },
     { header: "Phone Number", key: "phone", width: 20 },
@@ -202,25 +239,25 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
   // Rows
   applicants.forEach((applicant, i) => {
     const rowNumber = i + 4;
-    const isAttended = Boolean(applicant.attended);
-    const statusText = isAttended ? "✅ Attended (حاضر)" : "❌ Not Attended (غائب)";
-    const checkinTime = isAttended ? (applicant.attended_at || "Present") : "-";
+    const isFirst = Boolean(applicant.attended_first);
+    const isLast = Boolean(applicant.attended_last);
+    const firstText = isFirst ? "✅ Attended (حاضر)" : "❌ Not Attended (غائب)";
+    const lastText = isLast ? "✅ Attended (حاضر)" : "❌ Not Attended (غائب)";
+    const lastTime = isLast ? (applicant.attended_last_time || "Recorded") : "-";
 
     const row = worksheet.getRow(rowNumber);
     row.values = [
       i + 1,
       applicant.name,
       applicant.student_id,
-      statusText,
-      checkinTime,
+      firstText,
+      lastText,
+      lastTime,
       applicant.batch || "-",
       applicant.email,
       applicant.phone,
     ];
     row.height = 24;
-
-    const bgColor = isAttended ? "FFD4EDDA" : "FFF8D7DA";
-    const textColor = isAttended ? "FF155724" : "FF721C24";
 
     row.getCell(1).alignment = { horizontal: "center", vertical: "middle" };
     row.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
@@ -228,31 +265,43 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
     row.getCell(3).alignment = { horizontal: "center", vertical: "middle" };
     row.getCell(3).font = { name: "Courier New", bold: true };
 
-    const statusCell = row.getCell(4);
-    statusCell.alignment = { horizontal: "center", vertical: "middle" };
-    statusCell.font = { bold: true, color: { argb: textColor } };
-    statusCell.fill = {
+    // Attendance First cell
+    const cellFirst = row.getCell(4);
+    cellFirst.alignment = { horizontal: "center", vertical: "middle" };
+    cellFirst.font = { bold: true, color: { argb: isFirst ? "FF155724" : "FF721C24" } };
+    cellFirst.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: bgColor },
+      fgColor: { argb: isFirst ? "FFD4EDDA" : "FFF8D7DA" },
     };
 
-    const timeCell = row.getCell(5);
-    timeCell.alignment = { horizontal: "center", vertical: "middle" };
-    timeCell.font = { name: "Courier New", bold: isAttended, color: { argb: isAttended ? "FF155724" : "FF64748B" } };
-    if (isAttended) {
-      timeCell.fill = {
+    // Attendance Last cell
+    const cellLast = row.getCell(5);
+    cellLast.alignment = { horizontal: "center", vertical: "middle" };
+    cellLast.font = { bold: true, color: { argb: isLast ? "FF155724" : "FF721C24" } };
+    cellLast.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: isLast ? "FFD4EDDA" : "FFF8D7DA" },
+    };
+
+    // Attendance Last Time cell
+    const cellTime = row.getCell(6);
+    cellTime.alignment = { horizontal: "center", vertical: "middle" };
+    cellTime.font = { name: "Courier New", bold: isLast, color: { argb: isLast ? "FF155724" : "FF64748B" } };
+    if (isLast) {
+      cellTime.fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FFE8F5E9" },
       };
     }
 
-    row.getCell(6).alignment = { horizontal: "center", vertical: "middle" };
-    row.getCell(7).alignment = { horizontal: "left", vertical: "middle" };
-    row.getCell(8).alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell(7).alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell(8).alignment = { horizontal: "left", vertical: "middle" };
+    row.getCell(9).alignment = { horizontal: "center", vertical: "middle" };
 
-    for (let col = 1; col <= 8; col++) {
+    for (let col = 1; col <= 9; col++) {
       const cell = row.getCell(col);
       cell.border = {
         top: { style: "thin", color: { argb: "FFE2E8F0" } },
