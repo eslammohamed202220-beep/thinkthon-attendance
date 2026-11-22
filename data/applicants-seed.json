@@ -1,0 +1,524 @@
+[
+  {
+    "id": "0104eb1b-4027-490e-94e0-0855eaabf8d2",
+    "name": "Ahmed Elmahrouqi",
+    "student_id": "202612449",
+    "email": "s-a.elsayed49@zewailcity.edu.eg",
+    "phone": "01005780528",
+    "batch": "2026",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "04dfb054-93e1-4c35-8b87-1e7549ea52a0",
+    "name": "Mariam Mahmoud",
+    "student_id": "202506108",
+    "email": "s-mariam.ahmed25@zewailcity.edu.eg",
+    "phone": "01558621257",
+    "batch": "2025",
+    "major": "Electronics & Communications"
+  },
+  {
+    "id": "0691d703-0ff3-4eb2-bc16-e0668975ecf2",
+    "name": "Moaz Aboaly",
+    "student_id": "202613237",
+    "email": "s-m.aboaly37@zewailcity.edu.eg",
+    "phone": "01202725974",
+    "batch": "2026",
+    "major": "Science"
+  },
+  {
+    "id": "112d311c-f449-4d30-9eca-08d9b40dc3ea",
+    "name": "Yousuf ElDeeb",
+    "student_id": "202506619",
+    "email": "s-yousuf.eldeeb@zewailcity.edu.eg",
+    "phone": "01096925719",
+    "batch": "2025",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "122219c2-8745-4c5c-8ca3-95ec39ed1c75",
+    "name": "Mohamed Tamer Mohamed Wagdi",
+    "student_id": "202614233",
+    "email": "s-m.essa33@zewailcity.edu.eg",
+    "phone": "01222408081",
+    "batch": "2026",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "1345f4df-5266-4be4-9d17-932fc0f53c8f",
+    "name": "Yara Sayed Nady Mohamed Hemida",
+    "student_id": "202507556",
+    "email": "s-yara.mohamed@zewailcity.edu.eg",
+    "phone": "+201006406940",
+    "batch": "2025",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "1add8928-833e-4826-83ab-2803da3747d3",
+    "name": "Omar Ashraf Ahmed",
+    "student_id": "202301876",
+    "email": "s-omar.aahmed@zewailcity.edu.eg",
+    "phone": "01022090866",
+    "batch": "2023",
+    "major": "Communications Engineering"
+  },
+  {
+    "id": "33794697-256e-4f18-9c67-91eede2c0b62",
+    "name": "Jana Hamada Farid",
+    "student_id": "202500135",
+    "email": "s-jana.abdrabbo@zewailcity.edu.eg",
+    "phone": "01091815711",
+    "batch": "2025",
+    "major": "Computer Engineering"
+  },
+  {
+    "id": "34198450-c120-454f-8475-2ac9b148ce5e",
+    "name": "Rahma Hesham El-Hamouly",
+    "student_id": "202000434",
+    "email": "s-rahma.elhamouly@zewailcity.edu.eg",
+    "phone": "+201278277298",
+    "batch": "2027",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "353470c4-6e9c-4ac8-a118-e9a494bd1131",
+    "name": "Rayan Mohamed Rayan",
+    "student_id": "202500296",
+    "email": "s-rayan.rayan@zewailcity.edu.eg",
+    "phone": "+201013808144",
+    "batch": "2025",
+    "major": "Renewable Energy Engineering"
+  },
+  {
+    "id": "47fd6fe6-f45e-4ac2-8b6b-480499b689a7",
+    "name": "Abdullah ahmed",
+    "student_id": "202400523",
+    "email": "abdullahalrefaiy6@gmail.com",
+    "phone": "01284495000",
+    "batch": "2024",
+    "major": "Computer Science"
+  },
+  {
+    "id": "498c3c5f-0b7f-4bca-a17e-414c4cba6b89",
+    "name": "Yahya Hazem",
+    "student_id": "202300280",
+    "email": "s-yahya.elsayed@zewailcity.edu.eg",
+    "phone": "01202949764",
+    "batch": "2023",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "504b764c-e915-4b8c-8fed-cee29a72b8ef",
+    "name": "Eslam Mohamed",
+    "student_id": "202511723",
+    "email": "eslam.mohamed202220@gmail.com",
+    "phone": "01030796047",
+    "batch": "Engineering",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "56545e3f-66c7-4632-8504-f69541c251d1",
+    "name": "Omar Ahmed Mokhtar",
+    "student_id": "202500506",
+    "email": "s-omar.mokhtar@zewailcity.edu.eg",
+    "phone": "01012313038",
+    "batch": "2025",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "5d0fe9da-a2e3-48b9-9548-bf238195a690",
+    "name": "Hamza assem emam",
+    "student_id": "202615472",
+    "email": "s-h.sayed72@zewailcity.edu.eg",
+    "phone": "01021856999",
+    "batch": "2026",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "5d2f6bfd-e62a-4701-b560-e746c302f37c",
+    "name": "Mohamed mahmoud",
+    "student_id": "202612403",
+    "email": "mohmadmahmoud532@gmail.com",
+    "phone": "+201062379511",
+    "batch": "csai year",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "68b36759-f848-4e3a-bbf5-7dcf65600c7a",
+    "name": "Beshoy Ashraf Kamal Kamel",
+    "student_id": "202500383",
+    "email": "s-beshoy.kamel@zewailcity.edu.eg",
+    "phone": "01551262107",
+    "batch": "CSAI",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "7415e969-4265-4641-a34b-4a3f65cbc6da",
+    "name": "Rodina Tarek",
+    "student_id": "202612601",
+    "email": "s-r.nawar01@zewailcity.edu.eg",
+    "phone": "01016911030",
+    "batch": "2026",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "752be691-a3be-46eb-9baa-15e2ab0be319",
+    "name": "Mohamed Ghrabawy",
+    "student_id": "202520028",
+    "email": "s-mohamed.ghrabawy@zewailcity.edu.eg",
+    "phone": "01019627595",
+    "batch": "2025",
+    "major": "Communications Engineering"
+  },
+  {
+    "id": "79a0ffe2-9896-4915-b2ce-aeeaaa238f4a",
+    "name": "Amany Mohamed ElZeiny",
+    "student_id": "202300647",
+    "email": "s-amany.elziny@zewailcity.edu.eg",
+    "phone": "01038166429",
+    "batch": "2023",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "7c40fb4a-cc23-4794-ae2b-be9fff495610",
+    "name": "Mazen Mahmoud Salem",
+    "student_id": "202400447",
+    "email": "s-mazen.salem@zewailcity.edu.eg",
+    "phone": "01092293184",
+    "batch": "2024",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "8101a1c3-1122-4a55-9011-aa11bb22cc33",
+    "name": "Kareem Hassan",
+    "student_id": "202401188",
+    "email": "s-kareem.hassan@zewailcity.edu.eg",
+    "phone": "01123456789",
+    "batch": "2024",
+    "major": "Computer Engineering"
+  },
+  {
+    "id": "8202b2d4-2233-4b66-9122-bb22cc33dd44",
+    "name": "Salma Youssef",
+    "student_id": "202502299",
+    "email": "s-salma.youssef@zewailcity.edu.eg",
+    "phone": "01234567890",
+    "batch": "2025",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "8303c3e5-3344-4c77-9233-cc33dd44ee55",
+    "name": "Ziad Tarek",
+    "student_id": "202603311",
+    "email": "s-ziad.tarek@zewailcity.edu.eg",
+    "phone": "01045678901",
+    "batch": "2026",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "8404d4f6-4455-4d88-9344-dd44ee55ff66",
+    "name": "Nouran Adel",
+    "student_id": "202304422",
+    "email": "s-nouran.adel@zewailcity.edu.eg",
+    "phone": "01567890123",
+    "batch": "2023",
+    "major": "Renewable Energy Engineering"
+  },
+  {
+    "id": "8505e5a7-5566-4e99-9455-ee55ff66aa77",
+    "name": "Mostafa Ibrahim",
+    "student_id": "202505533",
+    "email": "s-mostafa.ibrahim@zewailcity.edu.eg",
+    "phone": "01178901234",
+    "batch": "2025",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "8606f6b8-6677-4faa-9566-ff66aa77bb88",
+    "name": "Hagar Ahmed",
+    "student_id": "202606644",
+    "email": "s-hagar.ahmed@zewailcity.edu.eg",
+    "phone": "01289012345",
+    "batch": "2026",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "8707a7c9-7788-4abb-9677-aa77bb88cc99",
+    "name": "Seif El-Din Amr",
+    "student_id": "202407755",
+    "email": "s-seif.amr@zewailcity.edu.eg",
+    "phone": "01090123456",
+    "batch": "2024",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "8808b8da-8899-4bcc-9788-bb88cc99ddaa",
+    "name": "Dina Khaled",
+    "student_id": "202508866",
+    "email": "s-dina.khaled@zewailcity.edu.eg",
+    "phone": "01501234567",
+    "batch": "2025",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "8909c9eb-99aa-4cdd-9899-cc99ddaaeeff",
+    "name": "Ali Sherif",
+    "student_id": "202609977",
+    "email": "s-ali.sherif@zewailcity.edu.eg",
+    "phone": "01112345678",
+    "batch": "2026",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "9010dafc-a0bb-4dee-99aa-ddaaeeff0011",
+    "name": "Laila Hesham",
+    "student_id": "202310088",
+    "email": "s-laila.hesham@zewailcity.edu.eg",
+    "phone": "01223456789",
+    "batch": "2023",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "9111eb0d-b1cc-4eff-a0bb-eeff00112233",
+    "name": "Farida Nader",
+    "student_id": "202511199",
+    "email": "s-farida.nader@zewailcity.edu.eg",
+    "phone": "01034567890",
+    "batch": "2025",
+    "major": "Renewable Energy Engineering"
+  },
+  {
+    "id": "9212fc1e-c2dd-4f00-b1cc-ff0011223344",
+    "name": "Khaled Walid",
+    "student_id": "202612211",
+    "email": "s-khaled.walid@zewailcity.edu.eg",
+    "phone": "01545678901",
+    "batch": "2026",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "9313ad2f-d3ee-4011-c2dd-001122334455",
+    "name": "Malak Hossam",
+    "student_id": "202413322",
+    "email": "s-malak.hossam@zewailcity.edu.eg",
+    "phone": "01156789012",
+    "batch": "2024",
+    "major": "Computer Engineering"
+  },
+  {
+    "id": "9414be3a-e4ff-4122-d3ee-112233445566",
+    "name": "Youssef Gamal",
+    "student_id": "202514433",
+    "email": "s-youssef.gamal@zewailcity.edu.eg",
+    "phone": "01267890123",
+    "batch": "2025",
+    "major": "Communications Engineering"
+  },
+  {
+    "id": "9515cf4b-f500-4233-e4ff-223344556677",
+    "name": "Habiba Ayman",
+    "student_id": "202615544",
+    "email": "s-habiba.ayman@zewailcity.edu.eg",
+    "phone": "01078901234",
+    "batch": "2026",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "9616d05c-0611-4344-f500-334455667788",
+    "name": "Tamer Samy",
+    "student_id": "202316655",
+    "email": "s-tamer.samy@zewailcity.edu.eg",
+    "phone": "01589012345",
+    "batch": "2023",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "9717e16d-1722-4455-0611-445566778899",
+    "name": "Nadine Mohsen",
+    "student_id": "202517766",
+    "email": "s-nadine.mohsen@zewailcity.edu.eg",
+    "phone": "01190123456",
+    "batch": "2025",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "9818f27e-2833-4566-1722-5566778899aa",
+    "name": "Rami Medhat",
+    "student_id": "202618877",
+    "email": "s-rami.medhat@zewailcity.edu.eg",
+    "phone": "01201234567",
+    "batch": "2026",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "9919a38f-3944-4677-2833-66778899aabb",
+    "name": "Maya Ashraf",
+    "student_id": "202419988",
+    "email": "s-maya.ashraf@zewailcity.edu.eg",
+    "phone": "01012345679",
+    "batch": "2024",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "a020b490-4a55-4788-3944-778899aabbcc",
+    "name": "Sherif Mahmoud",
+    "student_id": "202520099",
+    "email": "s-sherif.mahmoud@zewailcity.edu.eg",
+    "phone": "01523456789",
+    "batch": "2025",
+    "major": "Renewable Energy Engineering"
+  },
+  {
+    "id": "a121c5a1-5b66-4899-4a55-8899aabbccdd",
+    "name": "Reem Hany",
+    "student_id": "202621111",
+    "email": "s-reem.hany@zewailcity.edu.eg",
+    "phone": "01134567890",
+    "batch": "2026",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "a222d6b2-6c77-49aa-5b66-99aabbccddee",
+    "name": "Adham Mostafa",
+    "student_id": "202322222",
+    "email": "s-adham.mostafa@zewailcity.edu.eg",
+    "phone": "01245678901",
+    "batch": "2023",
+    "major": "Computer Engineering"
+  },
+  {
+    "id": "a323e7c3-7d88-4abb-6c77-aabbccddeeff",
+    "name": "Hania Bassem",
+    "student_id": "202523333",
+    "email": "s-hania.bassem@zewailcity.edu.eg",
+    "phone": "01056789012",
+    "batch": "2025",
+    "major": "Communications Engineering"
+  },
+  {
+    "id": "a424f8d4-8e99-4bcc-7d88-bbccddeeff00",
+    "name": "Karim Nabil",
+    "student_id": "202624444",
+    "email": "s-karim.nabil@zewailcity.edu.eg",
+    "phone": "01567890124",
+    "batch": "2026",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "a525a9e5-9f00-4cdd-8e99-ccddeeff0011",
+    "name": "Salma Fouad",
+    "student_id": "202425555",
+    "email": "s-salma.fouad@zewailcity.edu.eg",
+    "phone": "01178901235",
+    "batch": "2024",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "a626baf6-a011-4dee-9f00-ddeeff001122",
+    "name": "Hassan Reda",
+    "student_id": "202526666",
+    "email": "s-hassan.reda@zewailcity.edu.eg",
+    "phone": "01289012346",
+    "batch": "2025",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "a727cb07-b122-4eff-a011-eeff00112233",
+    "name": "Yara Wael",
+    "student_id": "202627777",
+    "email": "s-yara.wael@zewailcity.edu.eg",
+    "phone": "01090123457",
+    "batch": "2026",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "a828dc18-c233-4f00-b122-ff0011223344",
+    "name": "Tariq Essam",
+    "student_id": "202328888",
+    "email": "s-tariq.essam@zewailcity.edu.eg",
+    "phone": "01501234568",
+    "batch": "2023",
+    "major": "Electronics Engineering"
+  },
+  {
+    "id": "a929ed29-d344-4011-c233-001122334455",
+    "name": "Aya Sameh",
+    "student_id": "202529999",
+    "email": "s-aya.sameh@zewailcity.edu.eg",
+    "phone": "01112345679",
+    "batch": "2025",
+    "major": "Biomedical Sciences"
+  },
+  {
+    "id": "aa30fe3a-e455-4122-d344-112233445566",
+    "name": "Mahmoud Sabry",
+    "student_id": "202630011",
+    "email": "s-mahmoud.sabry@zewailcity.edu.eg",
+    "phone": "01223456780",
+    "batch": "2026",
+    "major": "Renewable Energy Engineering"
+  },
+  {
+    "id": "ab310f4b-f566-4233-e455-223344556677",
+    "name": "Marihan Magdy",
+    "student_id": "202431122",
+    "email": "s-marihan.magdy@zewailcity.edu.eg",
+    "phone": "01034567891",
+    "batch": "2024",
+    "major": "Electrical Engineering"
+  },
+  {
+    "id": "ac32105c-0677-4344-f566-334455667788",
+    "name": "Hazem Bahaa",
+    "student_id": "202532233",
+    "email": "s-hazem.bahaa@zewailcity.edu.eg",
+    "phone": "01545678902",
+    "batch": "2025",
+    "major": "Computer Engineering"
+  },
+  {
+    "id": "ad33216d-1788-4455-0677-445566778899",
+    "name": "Nour El-Sherif",
+    "student_id": "202633344",
+    "email": "s-nour.elsherif@zewailcity.edu.eg",
+    "phone": "01156789013",
+    "batch": "2026",
+    "major": "Communications Engineering"
+  },
+  {
+    "id": "ae34327e-2899-4566-1788-5566778899aa",
+    "name": "Amr Zakaria",
+    "student_id": "202334455",
+    "email": "s-amr.zakaria@zewailcity.edu.eg",
+    "phone": "01267890124",
+    "batch": "2023",
+    "major": "Nanotechnology Engineering"
+  },
+  {
+    "id": "af35438f-39aa-4677-2899-66778899aabb",
+    "name": "Shahd Hatem",
+    "student_id": "202535566",
+    "email": "s-shahd.hatem@zewailcity.edu.eg",
+    "phone": "01078901235",
+    "batch": "2025",
+    "major": "Aerospace Engineering"
+  },
+  {
+    "id": "b0365490-4abb-4788-39aa-778899aabbcc",
+    "name": "Youssef Talaat",
+    "student_id": "202636677",
+    "email": "s-youssef.talaat@zewailcity.edu.eg",
+    "phone": "01589012346",
+    "batch": "2026",
+    "major": "Computer Science & AI"
+  },
+  {
+    "id": "b13765a1-5bcc-4899-4abb-8899aabbccdd",
+    "name": "Nada Mansour",
+    "student_id": "202437788",
+    "email": "s-nada.mansour@zewailcity.edu.eg",
+    "phone": "01190123457",
+    "batch": "2024",
+    "major": "Electrical Engineering"
+  }
+]
