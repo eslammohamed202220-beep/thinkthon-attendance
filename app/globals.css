@@ -605,6 +605,25 @@ button, input {
   text-align: center;
 }
 
+.action-cell-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.checkin-time-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #047857;
+  background: #d1fae5;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  letter-spacing: 0.02em;
+}
+
 .checkin-btn {
   display: inline-flex;
   align-items: center;

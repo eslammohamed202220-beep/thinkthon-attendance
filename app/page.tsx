@@ -32,6 +32,7 @@ export default function AttendancePortal() {
   const [activeTabBatch, setActiveTabBatch] = useState<string>("all");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string>("");
+  const [exporting, setExporting] = useState<boolean>(false);
   const [, startTransition] = useTransition();
 
   const STORAGE_KEY = "syncthon_attendance_v1";
@@ -118,7 +119,11 @@ export default function AttendancePortal() {
     const newStatus = !applicant.attended;
     setPendingId(targetKey);
 
-    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const nowTime = new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
     const prev = [...applicants];
     const updated = applicants.map((a) => {
       if (a.student_id === targetKey || a.id === targetKey) {
@@ -171,17 +176,47 @@ export default function AttendancePortal() {
 
       setToastMessage(
         newStatus
-          ? `✓ ${applicant.name} checked in (Auto-saved)`
-          : `✕ ${applicant.name} marked absent (Auto-saved)`
+          ? `✓ ${applicant.name} checked in at ${nowTime}`
+          : `✕ ${applicant.name} marked absent`
       );
       setTimeout(() => setToastMessage(""), 3500);
     } catch (err) {
       console.warn("Server sync notice:", err);
-      // Even if network blips, local storage retains the check-in!
       setToastMessage(`✓ ${applicant.name} saved locally`);
       setTimeout(() => setToastMessage(""), 3500);
     } finally {
       setPendingId(null);
+    }
+  }
+
+  async function handleDownloadExcel() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/attendance/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicants }),
+      });
+
+      if (!res.ok) throw new Error("Excel export returned status " + res.status);
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "SyncThon.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setToastMessage("✓ SyncThon.xlsx downloaded with live attendance & timestamps!");
+      setTimeout(() => setToastMessage(""), 4000);
+    } catch (err) {
+      console.error("Export download failed:", err);
+      window.location.href = "/api/attendance/export";
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -234,19 +269,20 @@ export default function AttendancePortal() {
           </div>
 
           <div className="nav-actions">
-            <a
-              href="/api/attendance/export"
-              download="SyncThon.xlsx"
+            <button
+              type="button"
+              onClick={handleDownloadExcel}
+              disabled={exporting}
               className="excel-download-btn"
-              title="Download Excel spreadsheet"
+              title="Download live Excel spreadsheet"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span>Export SyncThon.xlsx</span>
-            </a>
+              <span>{exporting ? "Generating..." : "Export SyncThon.xlsx"}</span>
+            </button>
 
             <button
               type="button"
@@ -479,25 +515,32 @@ export default function AttendancePortal() {
                           </div>
                         </td>
                         <td className="cell-action">
-                          <button
-                            type="button"
-                            disabled={isPending}
-                            onClick={() => handleToggleAttendance(applicant)}
-                            className={`checkin-btn ${
-                              isAttended ? "checkin-btn-checked" : "checkin-btn-unchecked"
-                            }`}
-                          >
-                            <span className="checkbox-custom">
-                              {isAttended ? (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              ) : null}
-                            </span>
-                            <span className="btn-text">
-                              {isAttended ? "Checked In" : "Mark Present"}
-                            </span>
-                          </button>
+                          <div className="action-cell-container">
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => handleToggleAttendance(applicant)}
+                              className={`checkin-btn ${
+                                isAttended ? "checkin-btn-checked" : "checkin-btn-unchecked"
+                              }`}
+                            >
+                              <span className="checkbox-custom">
+                                {isAttended ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                ) : null}
+                              </span>
+                              <span className="btn-text">
+                                {isAttended ? "Checked In" : "Mark Present"}
+                              </span>
+                            </button>
+                            {isAttended && applicant.attended_at && (
+                              <span className="checkin-time-badge" title="Check-in timestamp">
+                                🕒 {applicant.attended_at}
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

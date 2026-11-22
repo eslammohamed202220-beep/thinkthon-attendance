@@ -143,7 +143,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
   });
 
   // Title Banner
-  worksheet.mergeCells("A1:G1");
+  worksheet.mergeCells("A1:H1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "THINKTHON 2026 — Official Attendance Roster (سجل الحضور الرسمي)";
   titleCell.font = { name: "Arial", size: 15, bold: true, color: { argb: "FFFFFFFF" } };
@@ -161,7 +161,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
   const absentCount = total - attendedCount;
   const rate = total > 0 ? Math.round((attendedCount / total) * 100) : 0;
 
-  worksheet.mergeCells("A2:G2");
+  worksheet.mergeCells("A2:H2");
   const statsCell = worksheet.getCell("A2");
   statsCell.value = `Total Registered: ${total}   |   ✅ Present: ${attendedCount}   |   ❌ Absent: ${absentCount}   |   Turnout Rate: ${rate}%   |   Updated: ${new Date().toLocaleString()}`;
   statsCell.font = { name: "Arial", size: 10, italic: true, color: { argb: "FF00B4DC" } };
@@ -179,6 +179,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
     { header: "Student Name", key: "name", width: 34 },
     { header: "Student ID", key: "student_id", width: 18 },
     { header: "Attendance Status", key: "status", width: 24 },
+    { header: "Check-in Time (وقت الحضور)", key: "time", width: 22 },
     { header: "Batch", key: "batch", width: 14 },
     { header: "Email Address", key: "email", width: 34 },
     { header: "Phone Number", key: "phone", width: 20 },
@@ -203,6 +204,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
     const rowNumber = i + 4;
     const isAttended = Boolean(applicant.attended);
     const statusText = isAttended ? "✅ Attended (حاضر)" : "❌ Not Attended (غائب)";
+    const checkinTime = isAttended ? (applicant.attended_at || "Present") : "-";
 
     const row = worksheet.getRow(rowNumber);
     row.values = [
@@ -210,6 +212,7 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
       applicant.name,
       applicant.student_id,
       statusText,
+      checkinTime,
       applicant.batch || "-",
       applicant.email,
       applicant.phone,
@@ -234,11 +237,22 @@ export async function generateExcelWorkbook(applicants: Applicant[], savePath?: 
       fgColor: { argb: bgColor },
     };
 
-    row.getCell(5).alignment = { horizontal: "center", vertical: "middle" };
-    row.getCell(6).alignment = { horizontal: "left", vertical: "middle" };
-    row.getCell(7).alignment = { horizontal: "center", vertical: "middle" };
+    const timeCell = row.getCell(5);
+    timeCell.alignment = { horizontal: "center", vertical: "middle" };
+    timeCell.font = { name: "Courier New", bold: isAttended, color: { argb: isAttended ? "FF155724" : "FF64748B" } };
+    if (isAttended) {
+      timeCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE8F5E9" },
+      };
+    }
 
-    for (let col = 1; col <= 7; col++) {
+    row.getCell(6).alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell(7).alignment = { horizontal: "left", vertical: "middle" };
+    row.getCell(8).alignment = { horizontal: "center", vertical: "middle" };
+
+    for (let col = 1; col <= 8; col++) {
       const cell = row.getCell(col);
       cell.border = {
         top: { style: "thin", color: { argb: "FFE2E8F0" } },
