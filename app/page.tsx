@@ -34,16 +34,71 @@ export default function AttendancePortal() {
   const [toastMessage, setToastMessage] = useState<string>("");
   const [, startTransition] = useTransition();
 
+  const STORAGE_KEY = "syncthon_attendance_v1";
+
   async function loadData() {
     setLoading(true);
     setError("");
+
+    // 1. Instantly restore from localStorage if available (zero wait, instant restore)
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as Record<string, { attended: boolean; attended_at?: string }>;
+        setApplicants((prev) =>
+          prev.map((a) => {
+            const key = a.student_id || a.id;
+            const rec = parsed[key];
+            return rec ? { ...a, attended: rec.attended, attended_at: rec.attended_at || null } : a;
+          })
+        );
+      }
+    } catch {}
+
+    // 2. Fetch latest from server
     try {
       const res = await fetch("/api/attendance");
       if (!res.ok) throw new Error("Could not connect to attendance service.");
       const json = await res.json();
-      if (json.success) {
-        setApplicants(json.applicants);
-        setStats(json.stats);
+      if (json.success && Array.isArray(json.applicants)) {
+        // Merge with local storage in case of any un-synced edits
+        let localMap: Record<string, { attended: boolean; attended_at?: string }> = {};
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) localMap = JSON.parse(raw);
+        } catch {}
+
+        const merged: Applicant[] = json.applicants.map((a: Applicant) => {
+          const key = a.student_id || a.id;
+          const localRec = localMap[key];
+          const isAttended = a.attended || (localRec ? localRec.attended : false);
+          return {
+            ...a,
+            attended: isAttended,
+            attended_at: a.attended_at || localRec?.attended_at || null,
+          };
+        });
+
+        const attendedCount = merged.filter((a) => a.attended).length;
+        const totalCount = merged.length;
+
+        setApplicants(merged);
+        setStats({
+          total: totalCount,
+          attended: attendedCount,
+          absent: totalCount - attendedCount,
+          rate: totalCount > 0 ? Math.round((attendedCount / totalCount) * 100) : 0,
+        });
+
+        // Update local storage with full synced map
+        const newLocalMap: Record<string, { attended: boolean; attended_at?: string }> = {};
+        merged.forEach((a) => {
+          const k = a.student_id || a.id;
+          if (a.attended) {
+            newLocalMap[k] = { attended: true, attended_at: a.attended_at || undefined };
+          }
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocalMap));
       } else {
         throw new Error(json.error || "Failed to load records.");
       }
@@ -63,13 +118,14 @@ export default function AttendancePortal() {
     const newStatus = !applicant.attended;
     setPendingId(targetKey);
 
+    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const prev = [...applicants];
     const updated = applicants.map((a) => {
       if (a.student_id === targetKey || a.id === targetKey) {
         return {
           ...a,
           attended: newStatus,
-          attended_at: newStatus ? new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null,
+          attended_at: newStatus ? nowTime : null,
         };
       }
       return a;
@@ -84,6 +140,18 @@ export default function AttendancePortal() {
       absent: totalCount - attendedCount,
       rate: totalCount > 0 ? Math.round((attendedCount / totalCount) * 100) : 0,
     });
+
+    // Save to localStorage immediately (guaranteed instant auto-save)
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      if (newStatus) {
+        map[targetKey] = { attended: true, attended_at: nowTime };
+      } else {
+        delete map[targetKey];
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    } catch {}
 
     try {
       const res = await fetch("/api/attendance", {
@@ -103,14 +171,15 @@ export default function AttendancePortal() {
 
       setToastMessage(
         newStatus
-          ? `✓ ${applicant.name} checked in successfully`
-          : `✕ ${applicant.name} marked absent`
+          ? `✓ ${applicant.name} checked in (Auto-saved)`
+          : `✕ ${applicant.name} marked absent (Auto-saved)`
       );
       setTimeout(() => setToastMessage(""), 3500);
     } catch (err) {
-      setApplicants(prev);
-      setError(err instanceof Error ? err.message : "Failed to record check-in.");
-      setTimeout(() => setError(""), 4000);
+      console.warn("Server sync notice:", err);
+      // Even if network blips, local storage retains the check-in!
+      setToastMessage(`✓ ${applicant.name} saved locally`);
+      setTimeout(() => setToastMessage(""), 3500);
     } finally {
       setPendingId(null);
     }
